@@ -10,15 +10,17 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write   # allow committing state.json updates
+  contents: write
 
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -32,7 +34,7 @@ jobs:
           THRESHOLD_USD: ${{ secrets.THRESHOLD_USD }}
         run: python run_once.py
 
-            - name: Commit updated state
+      - name: Commit updated state
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -40,9 +42,5 @@ jobs:
           git add state.json
           git commit -m "Update state" || echo "No changes"
 
-          # Pull latest and rebase our commit on top (prevents non-fast-forward)
           git pull --rebase origin main
-
-          # Push; if it fails due to a race, pull/rebase and retry once
           git push || (git pull --rebase origin main && git push)
-
