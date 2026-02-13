@@ -113,10 +113,12 @@ def main():
     hits.sort(key=lambda x: x[0])
 
     for t_ts, cash, meta, t in hits:
+        dt = datetime.fromtimestamp(t_ts, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
         tg_send(
             "🚨 BIG YES-SIDE TRADE\n"
             f"{meta.get('question')}\n"
             f"EndDate: {meta.get('endDate')}\n"
+            f"Trade time: {dt}\n"
             f"CASH ≈ ${cash:,.0f}\n"
             f"Outcome: {t.get('outcome')} | Side: {t.get('side')}\n"
             f"Tx: {t.get('transactionHash')}"
