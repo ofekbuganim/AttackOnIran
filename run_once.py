@@ -1,4 +1,5 @@
 import os, json, requests
+from zoneinfo import ZoneInfo
 from datetime import datetime, timezone, timedelta
 
 EVENT_SLUG = "us-strikes-iran-by"
@@ -111,17 +112,19 @@ def main():
 
     # Sort old->new so notifications come in order
     hits.sort(key=lambda x: x[0])
-
+    
     for t_ts, cash, meta, t in hits:
-        dt = datetime.fromtimestamp(t_ts, tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        israel = ZoneInfo("Asia/Jerusalem")
+        dt = datetime.fromtimestamp(t_ts, tz=timezone.utc).astimezone(israel)
+        dt_str = dt.strftime("%Y-%m-%d %H:%M:%S Israel")
         tg_send(
-            "🚨 BIG YES-SIDE TRADE\n"
-            f"{meta.get('question')}\n"
-            f"EndDate: {meta.get('endDate')}\n"
-            f"Trade time: {dt}\n"
-            f"CASH ≈ ${cash:,.0f}\n"
-            f"Outcome: {t.get('outcome')} | Side: {t.get('side')}\n"
-            f"Tx: {t.get('transactionHash')}"
+        "🚨 BIG YES-SIDE TRADE\n"
+        f"{meta.get('question')}\n"
+        f"EndDate: {meta.get('endDate')}\n"
+        f"Trade time: {dt_str}\n"
+        f"CASH ≈ ${cash:,.0f}\n"
+        f"Outcome: {t.get('outcome')} | Side: {t.get('side')}\n"
+        f"Tx: {t.get('transactionHash')}"
         )
 
     # Update state even if no hits (so we don't spam old trades if API ordering changes)
