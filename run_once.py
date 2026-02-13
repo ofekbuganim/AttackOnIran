@@ -16,7 +16,11 @@ def tg_send(text: str):
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     r = requests.post(url, json={"chat_id": chat_id, "text": text}, timeout=20)
     r.raise_for_status()
-
+    
+def is_israel_time_to_send_summary() -> bool:
+    now_il = datetime.now(timezone.utc).astimezone(ISRAEL_TZ)
+    return now_il.hour == 9
+    
 def parse_iso_z(s: str):
     return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
 
@@ -162,13 +166,14 @@ def main():
         tg_send(f"✅ Polymarket watcher is alive (daily ping). Event: {title}")
         mark_daily(state, "last_alive_date")
 
-    # B) Daily summary (once per Israel day)
-    if should_send_daily(state, "last_summary_date"):
+    # B) Daily summary (only at 09:00 Israel time, once per Israel day)
+    if is_israel_time_to_send_summary() and should_send_daily(state, "last_summary_date"):
         try:
             send_daily_summary(markets, threshold)
         except Exception as e:
             tg_send(f"⚠️ Daily summary failed: {e}")
         mark_daily(state, "last_summary_date")
+
 
     last_ts = int(state.get("last_ts", 0))
 
