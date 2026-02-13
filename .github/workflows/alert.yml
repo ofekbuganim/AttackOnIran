@@ -34,13 +34,26 @@ jobs:
           THRESHOLD_USD: ${{ secrets.THRESHOLD_USD }}
         run: python run_once.py
 
-      - name: Commit updated state
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+            - name: Restore state cache
+        uses: actions/cache@v4
+        with:
+          path: state.json
+          key: state-${{ github.ref_name }}
+          restore-keys: |
+            state-
 
-          git add state.json
-          git commit -m "Update state" || echo "No changes"
+      - name: Run checker
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          THRESHOLD_USD: ${{ secrets.THRESHOLD_USD }}
+        run: python run_once.py
 
-          git pull --rebase origin main
-          git push || (git pull --rebase origin main && git push)
+      - name: Save state cache
+        uses: actions/cache@v4
+        with:
+          path: state.json
+          key: state-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            state-${{ github.ref_name }}
+            state-
