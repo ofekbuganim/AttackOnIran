@@ -2,21 +2,15 @@ name: Polymarket Iran Alerts
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
-  workflow_dispatch:
-
-concurrency:
-  group: polymarket-iran-alerts
-  cancel-in-progress: true
-
-permissions:
-  contents: write
+    - cron: "*/1 * * * *"   # every 1 minute
+  workflow_dispatch:        # allow manual run
 
 jobs:
   run:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -24,36 +18,30 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install deps
-        run: pip install -r requirements.txt
+      - name: Install dependencies
+        run: |
+          pip install requests
 
-      - name: Run checker
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          THRESHOLD_USD: ${{ secrets.THRESHOLD_USD }}
-        run: python run_once.py
-
-            - name: Restore state cache
+      # 🔁 Restore previous state.json from cache
+      - name: Restore state cache
         uses: actions/cache@v4
         with:
           path: state.json
-          key: state-${{ github.ref_name }}
+          key: state-${{ github.ref }}
           restore-keys: |
             state-
 
-      - name: Run checker
+      - name: Run watcher
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           THRESHOLD_USD: ${{ secrets.THRESHOLD_USD }}
-        run: python run_once.py
+        run: |
+          python run_once.py
 
+      # 💾 Save updated state.json back to cache
       - name: Save state cache
-        uses: actions/cache@v4
+        uses: actions/cache/save@v4
         with:
           path: state.json
-          key: state-${{ github.ref_name }}-${{ github.run_id }}
-          restore-keys: |
-            state-${{ github.ref_name }}
-            state-
+          key: state-${{ github.ref }}
