@@ -2,8 +2,12 @@ name: Polymarket Iran Alerts
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # every 5 minutes (minimum)
+    - cron: "*/5 * * * *"
   workflow_dispatch:
+
+concurrency:
+  group: polymarket-iran-alerts
+  cancel-in-progress: true
 
 permissions:
   contents: write   # allow committing state.json updates
