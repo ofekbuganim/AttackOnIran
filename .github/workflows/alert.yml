@@ -2,8 +2,13 @@ name: Polymarket Iran Alerts
 
 on:
   schedule:
-    - cron: "5,10,15,20,25,30,35,40,45,50,55 * * * *"   
-  workflow_dispatch:        # allow manual run
+    - cron: "*/5 * * * *"   # every 5 minutes (minimum GitHub allows)
+  workflow_dispatch:
+
+concurrency:
+  group: polymarket-iran-alerts-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -21,14 +26,19 @@ jobs:
         run: |
           pip install requests
 
-      # 🔁 Restore previous state.json from cache
+      # ✅ Restore latest cached state.json (best match by prefix)
       - name: Restore state cache
         uses: actions/cache@v4
         with:
           path: state.json
-          key: state-${{ github.ref }}
+          key: state-${{ github.ref }}-${{ github.run_id }}
           restore-keys: |
-            state-
+            state-${{ github.ref }}-
+
+      # (Optional but safe) Ensure state.json exists even on first run
+      - name: Ensure state.json exists
+        run: |
+          if [ ! -f state.json ]; then echo '{"last_ts":0,"last_alive_date":"","last_summary_date":""}' > state.json; fi
 
       - name: Run watcher
         env:
@@ -38,9 +48,9 @@ jobs:
         run: |
           python run_once.py
 
-      # 💾 Save updated state.json back to cache
+      # ✅ Save a NEW cache every run (unique key)
       - name: Save state cache
         uses: actions/cache/save@v4
         with:
           path: state.json
-          key: state-${{ github.ref }}
+          key: state-${{ github.ref }}-${{ github.run_id }}
