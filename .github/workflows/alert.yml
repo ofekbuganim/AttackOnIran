@@ -2,7 +2,7 @@ name: Polymarket Iran Alerts
 
 on:
   schedule:
-    - cron: "*/1 * * * *"   # every 1 minute
+    - cron: "*/5 * * * *"   # every 1 minute
   workflow_dispatch:        # allow manual run
 
 jobs:
